@@ -1,0 +1,16 @@
+﻿node_modules/
+frontend/node_modules/
+.next/
+frontend/.next/
+out/
+frontend/out/
+.env
+.env.local
+*.key
+__pycache__/
+.pytest_cache/
+.gltest_cache/
+artifacts/
+*.log
+.DS_Store
+Thumbs.db
