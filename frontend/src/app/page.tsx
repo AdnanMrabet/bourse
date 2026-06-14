@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { RefreshCw, X, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
 import { useWallet } from '@/hooks/useWallet';
 import { useContractData } from '@/hooks/useContractData';
@@ -21,8 +21,10 @@ import {
 } from '@/lib/format';
 import { ToastProvider } from '@/components/Toast';
 import TickerHeader from '@/components/TickerHeader';
-import DepthHero from '@/components/DepthHero';
-import HowItWorks from '@/components/HowItWorks';
+import MarketOverview from '@/components/MarketOverview';
+import PitchTape from '@/components/PitchTape';
+import PricingNote from '@/components/PricingNote';
+import BiggestMoves from '@/components/BiggestMoves';
 import AssetCard from '@/components/AssetCard';
 import Skeleton from '@/components/Skeleton';
 import EmptyState from '@/components/EmptyState';
@@ -50,15 +52,8 @@ function Floor() {
   const [pitchAsset, setPitchAsset] = useState<AssetSummary | null>(null);
   const [detailAsset, setDetailAsset] = useState<AssetSummary | null>(null);
 
-  const marketRef = useRef<HTMLDivElement>(null);
-
-  const scrollToMarket = useCallback(() => {
-    const el = document.getElementById('how');
-    el?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
-
-  const scrollToFloor = useCallback(() => {
-    marketRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBoard = useCallback(() => {
+    document.getElementById('market')?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
   // One refresh after a confirmed write, then polling resumes.
@@ -71,19 +66,27 @@ function Floor() {
       <TickerHeader assets={data.assets} wallet={wallet} onList={() => setListOpen(true)} />
 
       <main>
-        <DepthHero stats={data.stats} network={NETWORK} onList={() => setListOpen(true)} onExplore={scrollToMarket} />
+        {/* 1. Market-overview band: live indices + top mover, no tall hero. */}
+        <MarketOverview
+          stats={data.stats}
+          assets={data.assets}
+          network={NETWORK}
+          loading={data.loading}
+          onList={() => setListOpen(true)}
+          onExplore={scrollToBoard}
+          onOpen={setDetailAsset}
+          onPitch={setPitchAsset}
+        />
 
-        <HowItWorks />
-
-        {/* THE MARKET */}
-        <section id="market" ref={marketRef} className="mx-auto max-w-7xl px-5 pb-8 pt-4" aria-label="The market">
+        {/* 2. The asset board: the full grid, placed high. */}
+        <section id="market" className="mx-auto max-w-7xl px-5 pb-10 pt-2" aria-label="The asset board">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.3em]" style={{ color: 'var(--cyan)' }}>
-                The market
+                The board
               </p>
               <h2 className="mt-3 font-display text-3xl font-extrabold sm:text-5xl" style={{ color: '#fff' }}>
-                Ideas on the board
+                Ideas trading on argument
               </h2>
             </div>
             <button
@@ -112,6 +115,17 @@ function Floor() {
             </div>
           )}
         </section>
+
+        {/* 3. Split: live pitch tape beside a compact pricing prospectus. */}
+        <section className="mx-auto max-w-7xl px-5 py-10" aria-label="Pitch tape and pricing">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <PitchTape assets={data.assets} onOpen={setDetailAsset} />
+            <PricingNote onList={() => setListOpen(true)} />
+          </div>
+        </section>
+
+        {/* 4. Biggest moves: top gainers and losers as horizontal rails. */}
+        <BiggestMoves assets={data.assets} onOpen={setDetailAsset} />
       </main>
 
       <LayeredFooter />
